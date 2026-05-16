@@ -215,6 +215,14 @@ export default function App() {
     return () => clearInterval(timer);
   }, [phase]);
 
+  // Thông báo cướp điểm khi vào steal
+  useEffect(() => {
+    if (phase === 'steal' && !notification) {
+      setNotification({ text: `ĐỘI ${stealingTeam} CƯỚP ĐIỂM!`, type: 'steal' });
+      setTimeout(() => setNotification(null), 1600);
+    }
+  }, [phase]);
+
   useEffect(() => {
     if (phase !== 'reveal' || !allRevealed) return;
     const t = setTimeout(() => {
@@ -404,7 +412,9 @@ export default function App() {
       {phase === 'round-end' && !r3 && (
         <div className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center text-center z-50">
           <div className="text-6xl text-[#eab308] font-black mb-8">VÒNG {currentRoundIdx + 1} KẾT THÚC</div>
-          <button onClick={() => { setPhase('team-select'); }} className="bg-green-600 px-16 py-5 text-3xl font-black rounded-2xl">SANG VÒNG TIẾP THEO</button>
+          <button onClick={nextRound} className="bg-green-600 px-16 py-5 text-3xl font-black rounded-2xl">
+            {currentRoundIdx === DATA.length - 2 ? 'VÀO VÒNG 3' : 'SANG VÒNG TIẾP THEO'}
+          </button>
         </div>
       )}
       {phase === 'round3-end' && (
