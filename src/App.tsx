@@ -251,7 +251,7 @@ export default function App() {
   }, [currentRoundIdx, firstTeamOfGame]);
 
   const handleStart = useCallback(() => {
-    // Fade out nhạc + animation chuyển cảnh mượt
+    // Fade nhạc mượt
     if (openingRef.current) {
       const fade = setInterval(() => {
         if (openingRef.current) {
@@ -265,16 +265,23 @@ export default function App() {
       }, 60);
     }
 
-    // Thêm hiệu ứng scale + fade khi chuyển màn
+    // Animation chuyển cảnh cao cấp (scale + blur + fade)
     const introEl = document.querySelector('.opening-screen');
     if (introEl) {
-      introEl.classList.add('scale-95', 'opacity-0', 'transition-all', 'duration-300');
+      introEl.classList.add(
+        'scale-[0.92]', 
+        'opacity-0', 
+        'blur-sm',
+        'transition-all', 
+        'duration-500', 
+        'ease-[cubic-bezier(0.22,1,0.36,1)]'
+      );
     }
 
     setTimeout(() => {
       playSound('win');
       setPhase('team-select');
-    }, 2500);
+    }, 520);
   }, [playSound]);
 
   const nextRound = useCallback(() => {
@@ -468,7 +475,11 @@ export default function App() {
             const exposed = phase === 'reveal' || phase === 'round-end' || phase === 'round3-end' || revealed[i];
             return (
               <div key={i} onClick={() => handleFlip(i)} className="h-[72px] sm:h-20 md:h-24 lg:h-28 cursor-pointer">
-                <motion.div animate={{ rotateX: exposed ? 180 : 0 }} transition={{ duration: 0.4 }} className="relative w-full h-full preserve-3d">
+                <motion.div 
+                  animate={{ rotateX: exposed ? 180 : 0, scale: exposed ? 1.03 : 1 }} 
+                  transition={{ type: "spring", stiffness: 280, damping: 20, mass: 0.8 }}
+                  className="relative w-full h-full preserve-3d"
+                >
                   <div className="absolute inset-0 backface-hidden bg-[#1e3a8a] border-[3px] md:border-4 border-[#eab308] rounded-2xl flex items-center justify-center">
                     {!exposed && <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#eab308] text-black text-3xl md:text-4xl font-black flex items-center justify-center">{i + 1}</div>}
                   </div>
@@ -575,7 +586,13 @@ export default function App() {
       {/* Flying points animation */}
       {flyingPoints.map(fp => (
         <div key={fp.id} className="absolute z-[60] text-4xl font-black text-[#eab308] pointer-events-none" style={{ left: fp.x, top: fp.y }}>
-          <motion.div initial={{ y: 0, opacity: 1, scale: 1.2 }} animate={{ y: -120, opacity: 0, scale: 0.8 }} transition={{ duration: 0.85 }}>+{fp.pts}</motion.div>
+          <motion.div 
+            initial={{ y: 0, opacity: 1, scale: 0.6 }} 
+            animate={{ y: -160, opacity: 0, scale: 1.3 }} 
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          >
+            +{fp.pts}
+          </motion.div>
         </div>
       ))}
 
@@ -583,9 +600,10 @@ export default function App() {
       {notification && (
         <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
           <motion.div
-            initial={{ scale: 0.6, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 1.2, opacity: 0 }}
+            initial={{ scale: 0.4, opacity: 0, y: 40 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: -30 }}
+            transition={{ type: "spring", stiffness: 300, damping: 18 }}
             className={`px-10 py-6 rounded-3xl text-4xl md:text-6xl font-black text-center border-4 shadow-2xl
               ${notification.type === 'steal' ? 'bg-red-600 border-red-400 text-white animate-pulse' : ''}
               ${notification.type === 'success' ? 'bg-yellow-400 border-yellow-300 text-black' : ''}
