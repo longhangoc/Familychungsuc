@@ -47,57 +47,61 @@ function isRound3(idx: number) { return idx === DATA.length - 1; }
 function OpeningScreen({ onStart, openingRef }: { onStart: () => void; openingRef: any }) {
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const playMusic = () => {
+    const audio = openingRef.current;
+    if (!audio) return;
+
+    audio.currentTime = 0;
+    audio.loop = true;
+    audio.volume = 0.65;
+    audio.muted = false;
+    
+    audio.play()
+      .then(() => setIsPlaying(true))
+      .catch((err) => console.log('Music play failed:', err));
+  };
+
   const toggleMusic = () => {
     const audio = openingRef.current;
-    if (!audio) {
-      console.log('Audio ref is null');
-      return;
-    }
+    if (!audio) return;
 
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.currentTime = 0;
-      audio.loop = true;
-      audio.volume = 0.65;
-      audio.play()
-        .then(() => setIsPlaying(true))
-        .catch((e) => console.log('Play error:', e));
+      playMusic();
     }
   };
 
-  // Aggressive autoplay bypass
   useEffect(() => {
-    const audio = openingRef.current;
-    if (audio) {
-      audio.currentTime = 0;
-      audio.loop = true;
-      audio.volume = 0.65;
-      audio.muted = true;
-      audio.play().then(() => {
-        setTimeout(() => {
-          if (audio) {
-            audio.muted = false;
-            setIsPlaying(true);
-          }
-        }, 80);
-      }).catch(() => {});
-    }
+    const timer = setTimeout(() => {
+      playMusic();
+    }, 300);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold relative opening-screen">
+    <motion.div
+      initial={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+      exit={{ 
+        opacity: 0, 
+        scale: 0.85, 
+        y: 60,
+        filter: 'blur(16px)',
+        transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] }
+      }}
+      className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold relative"
+    >
       <button
         onClick={toggleMusic}
-        className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all"
+        className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all z-50"
       >
         {isPlaying ? <VolumeX size={28} /> : <Volume2 size={28} />}
       </button>
 
       <div className="text-[120px] text-[#eab308] font-black tracking-[12px]">CHUNG SỨC</div>
       <button onClick={onStart} className="mt-8 bg-[#eab308] text-black px-16 py-5 text-3xl font-black rounded-3xl">BẮT ĐẦU CHƠI</button>
-    </div>
+    </motion.div>
   );
 }
 
@@ -211,6 +215,10 @@ export default function App() {
     if (s.phase !== 'play' && s.phase !== 'steal') return;
     playSound('strike');
 
+    // Reset timer khi bấm SAI
+    setIsTimerActive(false);
+    setAnswerTimer(15);
+
     if (isRound3(s.currentRoundIdx)) {
       const target = s.r3ActiveTeam!;
       if (target === 'A') {
@@ -252,7 +260,7 @@ export default function App() {
   }, [currentRoundIdx, firstTeamOfGame]);
 
   const handleStart = useCallback(() => {
-    // Fade nhạc mượt
+    // Fade nhạc
     if (openingRef.current) {
       const fade = setInterval(() => {
         if (openingRef.current) {
@@ -266,19 +274,11 @@ export default function App() {
       }, 60);
     }
 
-    // Animation chuyển cảnh opening cao cấp (cinematic)
-    const introEl = document.querySelector('.opening-screen') as HTMLElement;
-    if (introEl) {
-      introEl.style.transition = 'all 620ms cubic-bezier(0.23, 1, 0.32, 1)';
-      introEl.style.transform = 'scale(0.88) translateY(40px)';
-      introEl.style.opacity = '0';
-      introEl.style.filter = 'blur(12px)';
-    }
-
+    // Dùng Framer Motion để chuyển cảnh mượt (sẽ trigger exit animation)
     setTimeout(() => {
       playSound('win');
       setPhase('team-select');
-    }, 520);
+    }, 100);
   }, [playSound]);
 
   const nextRound = useCallback(() => {
@@ -454,7 +454,11 @@ export default function App() {
 
   // ─── OPENING SCREEN (tách riêng) ────────────────────────────────
   if (phase === 'intro') {
-    return <OpeningScreen onStart={handleStart} openingRef={openingRef} />;
+    return (
+      <AnimatePresence mode="wait">
+        <OpeningScreen onStart={handleStart} openingRef={openingRef} />
+      </AnimatePresence>
+    );
   }
 
   return (
