@@ -1,0 +1,6 @@
+{
+  "name": "Family Feud Host UI",
+  "description": "Game show Family Feud with host controls and player screen.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
