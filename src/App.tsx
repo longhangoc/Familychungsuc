@@ -196,6 +196,25 @@ export default function App() {
   const allRevealed = revealed.every(Boolean);
   const showBottomBar = phase !== 'intro' && phase !== 'round-end' && phase !== 'round3-end' && phase !== 'game-end';
 
+  // Tự động lật hết ô còn lại khi vào reveal
+  useEffect(() => {
+    if (phase !== 'reveal') return;
+    if (allRevealed) return;
+
+    let idx = 0;
+    const unrevealed = revealed.map((r, i) => !r ? i : -1).filter(i => i !== -1);
+    const timer = setInterval(() => {
+      if (idx < unrevealed.length) {
+        const i = unrevealed[idx];
+        setRevealed(prev => { const n = [...prev]; n[i] = true; return n; });
+        idx++;
+      } else {
+        clearInterval(timer);
+      }
+    }, 280);
+    return () => clearInterval(timer);
+  }, [phase]);
+
   useEffect(() => {
     if (phase !== 'reveal' || !allRevealed) return;
     const t = setTimeout(() => {
