@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'motion/react';
-import { X, ChevronRight } from 'lucide-react';
+import { X, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 
 type Phase = 'intro' | 'team-select' | 'play' | 'steal' | 'reveal' | 'round-end' | 'round3-end' | 'game-end';
 type Team = 'A' | 'B';
@@ -62,6 +62,7 @@ export default function App() {
   const [roundScoreThis, setRoundScoreThis] = useState<{ A: number; B: number }>({ A: 0, B: 0 });
   const [answerTimer, setAnswerTimer] = useState(15);
   const [firstTeamOfGame, setFirstTeamOfGame] = useState<Team | null>(null);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
   const stateRef = useRef({ phase, activeTeam, roundPoints, revealed, strikes, currentRoundIdx, scores, r3StrikesA, r3StrikesB, r3ActiveTeam });
   useEffect(() => {
@@ -76,7 +77,15 @@ export default function App() {
       strike: new Audio('https://www.myinstants.com/media/sounds/family-feud-strike-sfx_kN6Z99k.mp3'),
       win: new Audio('https://www.myinstants.com/media/sounds/family-feud-win-sound-effect.mp3'),
     };
-    openingRef.current = new Audio('/family-feud-theme.mp3');
+    const audio = new Audio('/family-feud-theme.mp3');
+    audio.autoplay = true;
+    audio.muted = true;
+    audio.loop = true;
+    audio.volume = 0.65;
+    audio.play().then(() => {
+      audio.muted = false;
+    }).catch(() => {});
+    openingRef.current = audio;
     if (openingRef.current) {
       openingRef.current.loop = true;
       openingRef.current.volume = 0.6;
@@ -354,8 +363,28 @@ export default function App() {
   }
 
   if (phase === 'intro') {
+    const toggleMusic = () => {
+      if (!openingRef.current) return;
+      if (isMusicPlaying) {
+        openingRef.current.pause();
+        setIsMusicPlaying(false);
+      } else {
+        openingRef.current.currentTime = 0;
+        openingRef.current.loop = true;
+        openingRef.current.volume = 0.65;
+        openingRef.current.play().then(() => setIsMusicPlaying(true)).catch(() => {});
+      }
+    };
+
     return (
-      <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold">
+      <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold relative">
+        <button
+          onClick={toggleMusic}
+          className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all"
+        >
+          {isMusicPlaying ? <VolumeX size={28} /> : <Volume2 size={28} />}
+        </button>
+
         <div className="text-[120px] text-[#eab308] font-black tracking-[12px]">CHUNG SỨC</div>
         <button onClick={handleStart} className="mt-8 bg-[#eab308] text-black px-16 py-5 text-3xl font-black rounded-3xl">BẮT ĐẦU CHƠI</button>
       </div>
