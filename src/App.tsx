@@ -442,7 +442,14 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-[#020513] text-white overflow-hidden font-sans font-bold select-none">
+    <div className="flex h-screen w-screen flex-col bg-[#020513] text-white overflow-hidden font-sans font-bold select-none relative">
+      {/* Background effects - bớt đơn điệu */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[15%] left-[10%] w-[420px] h-[420px] bg-[#eab308] rounded-full opacity-[0.035] blur-[120px] animate-[pulse_8s_ease-in-out_infinite]" />
+        <div className="absolute bottom-[20%] right-[8%] w-[380px] h-[380px] bg-[#3b82f6] rounded-full opacity-[0.04] blur-[110px] animate-[pulse_11s_ease-in-out_infinite_1.5s]" />
+        <div className="absolute top-[45%] left-[45%] w-[260px] h-[260px] bg-white rounded-full opacity-[0.015] blur-[90px]" />
+      </div>
+
       {statusBadge()}
 
       <div className="flex-1 flex flex-col max-w-[1800px] mx-auto w-full px-3 sm:px-4 md:px-6 pt-12 md:pt-14 lg:pt-16">
