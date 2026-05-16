@@ -59,6 +59,8 @@ export default function App() {
   const [roundScores, setRoundScores] = useState<{ A: number; B: number }[]>([]);
   const [notification, setNotification] = useState<{ text: string; type: 'steal' | 'success' | 'fail' | 'strike' | 'end' | 'win' } | null>(null);
   const [flyingPoints, setFlyingPoints] = useState<{ id: number; pts: number; team: Team; x: number; y: number }[]>([]);
+  const [roundScoreThis, setRoundScoreThis] = useState<{ A: number; B: number }>({ A: 0, B: 0 });
+  const [answerTimer, setAnswerTimer] = useState(15);
 
   const stateRef = useRef({ phase, activeTeam, roundPoints, revealed, strikes, currentRoundIdx, scores, r3StrikesA, r3StrikesB, r3ActiveTeam });
   useEffect(() => {
@@ -99,6 +101,7 @@ export default function App() {
     const newRevealed = [...s.revealed];
     newRevealed[i] = true;
     setRevealed(newRevealed);
+    setAnswerTimer(15);
 
     // Bay điểm animation
     const rect = (document.querySelectorAll('.preserve-3d')[i] as HTMLElement)?.getBoundingClientRect();
@@ -172,27 +175,24 @@ export default function App() {
   const handleTeamSelect = useCallback((team: Team) => {
     setActiveTeam(team);
     setPhase('play');
+    setAnswerTimer(15);
   }, []);
 
   const handleStart = useCallback(() => {
-    // Fade out opening theme
     if (openingRef.current) {
-      const fade = setInterval(() => {
-        if (openingRef.current) {
-          openingRef.current.volume = Math.max(0, openingRef.current.volume - 0.08);
-          if (openingRef.current.volume <= 0.05) {
-            openingRef.current.pause();
-            openingRef.current.volume = 0.6;
-            clearInterval(fade);
-          }
-        }
-      }, 80);
+      openingRef.current.currentTime = 0;
+      openingRef.current.loop = false;
+      openingRef.current.volume = 0.75;
+      openingRef.current.play().catch(() => {});
     }
-    // Play short transition sting (reuse win sound as end of theme)
+    // Sau ~4.8s (đoạn cuối theme) thì chuyển vào game mượt
     setTimeout(() => {
+      if (openingRef.current) {
+        openingRef.current.pause();
+      }
       playSound('win');
       setPhase('team-select');
-    }, 650);
+    }, 4800);
   }, [playSound]);
 
   const nextRound = useCallback(() => {
@@ -241,17 +241,35 @@ export default function App() {
     return () => clearInterval(timer);
   }, [phase]);
 
+  // Timer 15s cho tất cả vòng
+  useEffect(() => {
+    if (phase !== 'play') return;
+    const isR3Active = r3 && r3ActiveTeam;
+    const isR1R2Active = !r3 && activeTeam;
+    if (!isR3Active && !isR1R2Active) return;
+
+    if (answerTimer <= 0) {
+      handleStrike();
+      return;
+    }
+    const t = setTimeout(() => setAnswerTimer(answerTimer - 1), 1000);
+    return () => clearTimeout(t);
+  }, [phase, r3, r3ActiveTeam, activeTeam, answerTimer]);
+
 
 
   useEffect(() => {
     if (phase !== 'reveal' || !allRevealed) return;
-    const t = setTimeout(() => {
-      setNotification({ text: `KẾT THÚC VÒNG ${currentRoundIdx + 1}!`, type: 'end' });
-      setTimeout(() => setNotification(null), 2200);
-      setPhase(r3 ? 'round3-end' : 'round-end');
-    }, 900);
-    return () => clearTimeout(t);
+    // Lưu điểm vòng này để tổng kết
+    setRoundScoreThis({ A: scores.A, B: scores.B });
+
+    // Chỉ hiện thông báo, KHÔNG tự chuyển phase
+    setNotification({ text: `KẾT THÚC VÒNG ${currentRoundIdx + 1}!`, type: 'end' });
+    const timer = setTimeout(() => setNotification(null), 3800);
+    return () => clearTimeout(timer);
   }, [phase, allRevealed, r3]);
+
+
 
   const toGameEnd = useCallback(() => {
     setRoundScores(prev => [...prev, { A: scores.A, B: scores.B }]);
@@ -307,10 +325,6 @@ export default function App() {
   }
 
   if (phase === 'intro') {
-    // Auto play opening theme
-    if (openingRef.current && openingRef.current.paused) {
-      openingRef.current.play().catch(() => {});
-    }
     return (
       <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold">
         <div className="text-[120px] text-[#eab308] font-black tracking-[12px]">CHUNG SỨC</div>
@@ -334,6 +348,7 @@ export default function App() {
           <div className="flex justify-center gap-2 md:gap-3 mb-2 md:mb-3">
             {[0,1,2].map(i => <div key={i} className={`w-9 h-9 md:w-11 md:h-11 border-4 rounded-xl flex items-center justify-center ${i < strikes ? 'border-red-600 text-red-600' : 'border-white/20 text-white/20'}`}><X size={22} className="md:hidden" /><X size={28} strokeWidth={6} className="hidden md:block" /></div>)}
             <span className="self-center ml-2 text-xs md:text-sm text-white/60">({strikes}/3)</span>
+            {phase === 'play' && <span className="ml-4 text-yellow-400 font-mono text-xl">{answerTimer}s</span>}
           </div>
         )}
         {r3 && (phase === 'play' || phase === 'steal') && (
@@ -342,6 +357,7 @@ export default function App() {
               const sc = t === 'A' ? r3StrikesA : r3StrikesB;
               return <div key={t} className="flex items-center gap-1.5"><span className="text-white/70">ĐỘI {t}</span>{[0,1,2].map(i => <div key={i} className={`w-7 h-7 md:w-8 md:h-8 border-2 rounded flex items-center justify-center ${i<sc?'border-red-600 text-red-600':'border-white/20'}`}><X size={16} strokeWidth={5}/></div>)}<span className="text-xs text-red-400">({sc}/3)</span></div>;
             })}
+            {r3ActiveTeam && <div className="ml-4 text-yellow-400 font-mono text-xl">{answerTimer}s</div>}
           </div>
         )}
 
@@ -433,17 +449,15 @@ export default function App() {
       )}
 
       {/* Overlays */}
-      {phase === 'round-end' && !r3 && (
-        <div className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center text-center z-50">
-          <div className="text-6xl text-[#eab308] font-black mb-8">VÒNG {currentRoundIdx + 1} KẾT THÚC</div>
-          <button onClick={nextRound} className="bg-green-600 px-16 py-5 text-3xl font-black rounded-2xl">
-            {currentRoundIdx === DATA.length - 2 ? 'VÀO VÒNG 3' : 'SANG VÒNG TIẾP THEO'}
-          </button>
-        </div>
-      )}
+
       {phase === 'round3-end' && (
         <div className="absolute inset-0 bg-black/95 flex flex-col items-center justify-center text-center z-50">
-          <div className="text-6xl text-[#eab308] font-black mb-8">VÒNG 3 KẾT THÚC</div>
+          <div className="text-6xl text-[#eab308] font-black mb-6">VÒNG 3 KẾT THÚC</div>
+          <div className="text-3xl mb-8 text-white/80">Điểm vòng này</div>
+          <div className="flex gap-16 text-5xl font-mono mb-10">
+            <div className="text-[#eab308]">ĐỘI A: {roundScoreThis.A}</div>
+            <div className="text-[#eab308]">ĐỘI B: {roundScoreThis.B}</div>
+          </div>
           <button onClick={toGameEnd} className="bg-[#eab308] text-black px-16 py-5 text-3xl font-black rounded-2xl">XEM KẾT QUẢ CUỐI CÙNG</button>
         </div>
       )}
