@@ -285,25 +285,31 @@ export default function App() {
     const s = stateRef.current;
     if (s.currentRoundIdx < DATA.length - 1) {
       const nextIdx = s.currentRoundIdx + 1;
-      setCurrentRoundIdx(nextIdx);
+
+      // Reset chung
       setRevealed(Array(6).fill(false));
       setRoundPoints(0);
       setStrikes(0);
+      setIsTimerActive(false);
+      setAnswerTimer(15);
+
+      setCurrentRoundIdx(nextIdx);
+
       if (isRound3(nextIdx)) {
+        // Vào vòng 3
         setR3StrikesA(0);
         setR3StrikesB(0);
         setR3ActiveTeam(null);
         setActiveTeam(null);
         setPhase('play');
       } else {
-        // Vòng 2 tự động đội còn lại
+        // Vòng 2: luân phiên đội
         const nextTeam = firstTeamOfGame === 'A' ? 'B' : 'A';
         setActiveTeam(nextTeam);
         setPhase('play');
-        setAnswerTimer(15);
       }
     }
-  }, []);
+  }, [firstTeamOfGame]);
 
   const currentRound = DATA[currentRoundIdx];
   const r3 = isRound3(currentRoundIdx);
@@ -406,10 +412,26 @@ export default function App() {
 
   function statusBadge() {
     if (phase === 'game-end' || phase === 'intro') return null;
-    const base = "absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-2xl font-black uppercase tracking-widest border text-sm sm:text-base";
-    if (r3) return <div className={`${base} bg-blue-600/90 border-blue-400 text-white`}>VÒNG 3 — LUÂN PHIÊN</div>;
-    if (phase === 'steal') return <div className={`${base} bg-red-600 border-red-400 text-white animate-pulse`}>🔥 ĐỘI {stealingTeam} ĐANG CƯỚP ĐIỂM</div>;
-    if (phase === 'team-select') return <div className={`${base} bg-white/10 border-white/30`}>VÒNG {currentRoundIdx + 1} — CHỌN ĐỘI BẮT ĐẦU</div>;
+    
+    const base = "absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-30 px-5 py-1.5 rounded-2xl font-black uppercase tracking-widest border text-sm sm:text-base shadow-lg";
+
+    // Vòng 3: hiển thị đội đang trả lời lượt hiện tại
+    if (r3) {
+      if (r3ActiveTeam) {
+        return <div className={`${base} bg-blue-600 border-blue-400 text-white`}>VÒNG 3 — ĐỘI {r3ActiveTeam} ĐANG TRẢ LỜI</div>;
+      }
+      return <div className={`${base} bg-blue-600/90 border-blue-400 text-white`}>VÒNG 3 — LUÂN PHIÊN</div>;
+    }
+
+    if (phase === 'steal') {
+      return <div className={`${base} bg-red-600 border-red-400 text-white animate-pulse`}>🔥 ĐỘI {stealingTeam} ĐANG CƯỚP ĐIỂM</div>;
+    }
+
+    if (phase === 'team-select') {
+      return <div className={`${base} bg-white/10 border-white/30`}>VÒNG {currentRoundIdx + 1} — CHỌN ĐỘI BẮT ĐẦU</div>;
+    }
+
+    // Vòng 1-2
     return <div className={`${base} bg-white/10 border-white/30`}>VÒNG {currentRoundIdx + 1} — ĐỘI {activeTeam} ĐANG CHƠI</div>;
   }
 
