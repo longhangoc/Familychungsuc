@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import confetti from 'canvas-confetti';
 import { X, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 
 type Phase = 'intro' | 'team-select' | 'play' | 'steal' | 'reveal' | 'round-end' | 'round3-end' | 'game-end';
@@ -265,17 +266,13 @@ export default function App() {
       }, 60);
     }
 
-    // Animation chuyển cảnh cao cấp (scale + blur + fade)
-    const introEl = document.querySelector('.opening-screen');
+    // Animation chuyển cảnh opening cao cấp (cinematic)
+    const introEl = document.querySelector('.opening-screen') as HTMLElement;
     if (introEl) {
-      introEl.classList.add(
-        'scale-[0.92]', 
-        'opacity-0', 
-        'blur-sm',
-        'transition-all', 
-        'duration-500', 
-        'ease-[cubic-bezier(0.22,1,0.36,1)]'
-      );
+      introEl.style.transition = 'all 620ms cubic-bezier(0.23, 1, 0.32, 1)';
+      introEl.style.transform = 'scale(0.88) translateY(40px)';
+      introEl.style.opacity = '0';
+      introEl.style.filter = 'blur(12px)';
     }
 
     setTimeout(() => {
@@ -418,13 +415,32 @@ export default function App() {
 
   if (phase === 'game-end') {
     const winner = scores.A > scores.B ? 'ĐỘI A' : scores.B > scores.A ? 'ĐỘI B' : null;
+
+    // Trigger real confetti
+    confetti({
+      particleCount: 180,
+      spread: 90,
+      origin: { y: 0.6 }
+    });
+    setTimeout(() => {
+      confetti({
+        particleCount: 120,
+        angle: 60,
+        spread: 70,
+        origin: { x: 0.1, y: 0.7 }
+      });
+    }, 180);
+    setTimeout(() => {
+      confetti({
+        particleCount: 120,
+        angle: 120,
+        spread: 70,
+        origin: { x: 0.9, y: 0.7 }
+      });
+    }, 380);
+
     return (
       <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          {Array.from({ length: 28 }).map((_, i) => (
-            <div key={i} className="absolute w-2 h-2 bg-[#eab308] rounded-full animate-[confetti_1.8s_linear_infinite]" style={{ left: `${(i * 7) % 100}%`, top: `-${20 + (i % 5) * 10}px`, animationDelay: `-${i * 0.07}s` }} />
-          ))}
-        </div>
         <div className="text-7xl text-[#eab308] font-black mb-6 z-10">CHUNG SỨC</div>
         <div className="text-6xl font-black mb-10 z-10">{winner ? `${winner} CHIẾN THẮNG!` : 'HÒA!'}</div>
         <div className="flex gap-12 mb-8 text-4xl z-10">
