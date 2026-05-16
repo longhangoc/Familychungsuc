@@ -253,33 +253,26 @@ export default function App() {
   // Floating status badge for room screen
   function statusBadge() {
     if (phase === 'game-end' || phase === 'intro') return null;
+    const isStealPhase = phase === 'steal';
+    const base  = "absolute top-[6px] sm:top-3 left-1/2 -translate-x-1/2 z-30 shrink-0 max-w-[90vw] text-center px-2 sm:px-3 md:px-6 lg:px-8 py-1 sm:py-1.5 md:py-2.5 lg:py-3 rounded-lg sm:rounded-xl md:rounded-2xl font-black uppercase tracking-wider border";
+    const r3Cls = base + " bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-400/40";
+    const stCls   = base + " bg-gradient-to-r from-red-600 to-red-700 text-white border-2 sm:border-3 md:border-4 border-red-400/40 shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-pulse";
+    const defCls  = base + " bg-white/10 border-white/20";
+    // Reduce text size on steal badge on mobile — it has extra emoji chars
+    const txtMobile = isStealPhase ? "text-[9px]" : "text-[11px]";
+    const fullR3  = `${r3Cls} ${txtMobile} sm:text-xs md:text-sm lg:text-base truncate`;
+    const fullSt  = `${stCls} ${txtMobile} sm:text-xs md:text-sm lg:text-base truncate`;
+    const fullDef = `${defCls} ${txtMobile} sm:text-xs md:text-sm lg:text-base truncate`;
     if (r3) {
-      return (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 md:px-8 py-2 md:py-3 rounded-2xl text-lg md:text-2xl font-black uppercase tracking-wider border-2 border-blue-400/40">
-          VÒNG 3 — LUÂN PHIÊN
-        </div>
-      );
+      return (<div className={fullR3}>VÒNG 3 — LUÂN PHIÊN</div>);
     }
-    if (phase === 'steal') {
-      return (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-gradient-to-r from-red-600 to-red-700 text-white px-5 md:px-10 py-2 md:py-3 rounded-2xl text-lg md:text-2xl font-black uppercase tracking-wider animate-pulse border-4 border-red-400/40 shadow-[0_0_40px_rgba(220,38,38,0.6)]">
-          🔥 CƯỚP ĐIỂM — ĐỘI {stealingTeam}
-        </div>
-      );
+    if (isStealPhase) {
+      return (<div className={fullSt}>🔥 CƯỚP ĐIỂM — ĐỘI {stealingTeam}</div>);
     }
     if (phase === 'team-select') {
-      return (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-white/10 border-2 border-white/20 px-5 md:px-8 py-2 rounded-2xl text-lg md:text-2xl font-black tracking-wider">
-          VÒNG {currentRoundIdx + 1} — CHỌN ĐỘI BẮT ĐẦU
-        </div>
-      );
+      return (<div className={fullDef}>VÒNG {currentRoundIdx + 1} — CHỌN ĐỘI BẮT ĐẦU</div>);
     }
-    // play
-    return (
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-white/10 border-2 border-white/20 px-5 md:px-8 py-2 rounded-2xl text-lg md:text-2xl font-black tracking-wider">
-        VÒNG {currentRoundIdx + 1} — ĐỘI {activeTeam ?? '?'} ĐANG CHƠI
-      </div>
-    );
+    return (<div className={fullDef}>VÒNG {currentRoundIdx + 1} — ĐỘI {activeTeam ?? '?'} ĐANG CHƠI</div>);
   }
 
   // ─── WIN SCREEN ───────────────────────────────────────────────────
@@ -335,7 +328,7 @@ export default function App() {
 
   // ─── RENDERING HELPERS ────────────────────────────────────────────
   // show all answers without interactivity (overlays / team-select / reveal)
-  const sneakReveal = phase === 'team-select' || phase === 'reveal' || phase === 'round-end' || phase === 'round3-end';
+   const sneakReveal = phase === 'reveal' || phase === 'round-end' || phase === 'round3-end';
   // phases where clicking cells is allowed
   const interactivePhase = phase === 'play' || phase === 'steal' || phase === 'reveal';
 
@@ -357,95 +350,92 @@ export default function App() {
       {statusBadge()}
 
       {showBoard && (
-        <div className="flex flex-col h-full w-full max-w-6xl mx-auto px-4">
+        <div className="flex flex-col h-full w-full max-w-[1800px] mx-auto px-2 sm:px-3 md:px-4">
+          {/* spacer for absolute status badge */}
+          <div className="h-5 sm:h-6 md:h-8 lg:h-9 shrink-0" />
           {/* Question */}
-          <div className="w-full border-[3px] border-[#eab308] bg-gradient-to-b from-[#0a1930] to-[#01081a] rounded-3xl p-4 md:p-6 mb-3 text-center shadow-[0_10px_40px_rgba(234,179,8,0.2)] flex-shrink-0">
-            <h1 className="text-xl md:text-2xl xl:text-3xl text-white font-black uppercase tracking-wide leading-tight">{currentRound.question}</h1>
+          <div className="w-full border-[2.5px] border-[#eab308] bg-gradient-to-b from-[#0a1930] to-[#01081a] rounded-2xl md:rounded-3xl p-2.5 sm:p-3 md:p-5 lg:p-6 mb-1.5 sm:mb-2 md:mb-3 text-center shadow-[0_3px_16px_rgba(234,179,8,0.18)] flex-shrink-0">
+            <h1 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-white font-black uppercase tracking-wide leading-[1.25] md:leading-[1.3] max-w-full px-0.5 sm:px-1">{currentRound.question}</h1>
             {phase !== 'team-select' && (
-              <div className="flex items-center justify-center bg-black/80 border-2 border-[#eab308]/50 rounded-xl px-5 py-1.5 md:py-2 shadow-[0_5px_20px_rgba(0,0,0,0.5)] mt-3 gap-3">
-                <span className="text-[#eab308] text-xs md:text-sm uppercase tracking-[3px] font-black">ĐIỂM VÒNG</span>
-                <span className="font-mono text-3xl md:text-4xl text-[#eab308] font-black leading-none">{roundPoints}</span>
+              <div className="flex items-center justify-center bg-black/80 border-2 border-[#eab308]/50 rounded-lg md:rounded-xl px-3 sm:px-4 md:px-6 py-1 sm:py-1.5 md:py-2 shadow-[0_2px_8px_rgba(0,0,0,0.5)] mt-2 sm:mt-2.5 md:mt-3 shrink-0">
+                <span className="text-[#eab308] text-[9px] sm:text-[10px] md:text-xs uppercase tracking-[1px] md:tracking-[2px] lg:tracking-[3px] font-black mr-2 sm:mr-3 md:mr-4 shrink-0">ĐIỂM</span>
+                <span className="font-mono text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-[#eab308] font-black leading-none shrink-0">{roundPoints}</span>
               </div>
             )}
           </div>
 
-          {/* Strikes r1-r2 */}
+          {/* ── Strikes r1-r2 ── */}
           {(phase === 'play' || phase === 'steal') && !r3 && (
-            <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 md:mb-3 flex-shrink-0">
               {[0, 1, 2].map(i => (
                 <div key={i}
-                  className={`w-[36px] h-[36px] md:w-[50px] md:h-[50px] border-[3px] rounded-xl flex items-center justify-center font-bold transition-all duration-300
-                    ${i < strikes ? 'border-[#ff0000] text-[#ff0000] bg-[#600000] shadow-[0_0_15px_#ff0000]' : 'border-white/20 text-white/20 bg-black/40'}`}>
-                  <X strokeWidth={5} className="w-5 h-5 md:w-8 md:h-8" />
+                  className={`w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 lg:w-12 lg:h-12 border-[2.5px] md:border-[3px] rounded-lg md:rounded-xl flex items-center justify-center font-bold transition-all duration-300 shrink-0
+                    ${i < strikes ? 'border-[#ff0000] text-[#ff0000] bg-[#600000] shadow-[0_0_12px_#ff0000]' : 'border-white/20 text-white/20 bg-black/40'}`}>
+                  <X strokeWidth={5} className="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 lg:w-8 lg:h-8" />
                 </div>
               ))}
-              <span className="text-white/80 text-sm md:text-sm font-bold tracking-wider">({strikes}/3)</span>
+              <span className="text-white/80 text-xs sm:text-sm font-bold tracking-wider ml-1 shrink-0">({strikes}/3)</span>
             </div>
           )}
 
-          {/* Strikes r3 — dual */}
+          {/* ── Strikes r3 — dual ── */}
           {r3 && (phase === 'play' || phase === 'steal') && (
-            <div className="flex items-center gap-6 mb-3 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="text-white/70 text-sm uppercase mr-1">Đội A:</span>
-                {[0, 1, 2].map(i => (
-                  <div key={i}
-                    className={`w-[28px] h-[28px] md:w-[38px] md:h-[38px] border-[3px] rounded-lg flex items-center justify-center transition-all duration-300
-                      ${i < r3StrikesA ? 'border-[#ff0000] text-[#ff0000] bg-[#600000]' : 'border-white/20 text-white/20 bg-black/40'}`}>
-                    <X strokeWidth={4} className="w-3 h-3 md:w-6 md:h-6" />
+            <div className="flex items-center justify-center gap-4 sm:gap-6 mb-2 md:mb-3 flex-shrink-0 flex-wrap">
+              {(['A', 'B'] as const).map(team => {
+                const sc = team === 'A' ? r3StrikesA : r3StrikesB;
+                return (
+                  <div key={team} className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-white/70 text-xs sm:text-sm uppercase mr-0.5 shrink-0">Đội {team}:</span>
+                    {[0, 1, 2].map(i => (
+                      <div key={i}
+                        className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 border-[2px] md:border-[2.5px] rounded flex items-center justify-center transition-all duration-300 shrink-0
+                          ${i < sc ? 'border-[#ff0000] text-[#ff0000] bg-[#600000]' : 'border-white/20 text-white/20 bg-black/40'}`}>
+                        <X strokeWidth={4} className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-5 md:h-5" />
+                      </div>
+                    ))}
+                    <span className="text-red-400 text-xs font-bold ml-0.5 shrink-0">({sc}/3)</span>
                   </div>
-                ))}
-                <span className="text-red-400 text-xs md:text-sm font-bold ml-1">({r3StrikesA}/3)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-white/70 text-sm uppercase mr-1">Đội B:</span>
-                {[0, 1, 2].map(i => (
-                  <div key={i}
-                    className={`w-[28px] h-[28px] md:w-[38px] md:h-[38px] border-[3px] rounded-lg flex items-center justify-center transition-all duration-300
-                      ${i < r3StrikesB ? 'border-[#ff0000] text-[#ff0000] bg-[#600000]' : 'border-white/20 text-white/20 bg-black/40'}`}>
-                    <X strokeWidth={4} className="w-3 h-3 md:w-6 md:h-6" />
-                  </div>
-                ))}
-                <span className="text-red-400 text-xs md:text-sm font-bold ml-1">({r3StrikesB}/3)</span>
-              </div>
+                );
+              })}
             </div>
           )}
 
-          {/* R1-2 reveal hint */}
+          {/* ── R1-2 reveal hint ── */}
           {!r3 && phase === 'reveal' && !allRevealed && (
-            <div className="text-center text-[#eab308] text-sm md:text-base font-black uppercase tracking-widest mb-2 animate-pulse flex-shrink-0">
+            <div className="text-center text-[#eab308] text-xs sm:text-sm md:text-base font-black uppercase tracking-widest mb-2 animate-pulse flex-shrink-0">
               Lật hết đáp án còn lại để sang vòng mới
             </div>
           )}
 
-          {/* Answer grid */}
-          <div className="grid grid-cols-2 gap-y-3 gap-x-4 md:gap-y-4 md:gap-x-6 xl:gap-y-6 xl:gap-x-10 w-full flex-1 min-h-0 mb-4">
+          {/* ── Answer grid ── */}
+          <div className="grid grid-cols-2 w-full flex-1 min-h-[80px] md:min-h-[180px] mb-2 md:mb-4 gap-y-[6px] sm:gap-y-2 md:gap-y-3 gap-x-2 sm:gap-x-3 md:gap-x-4 lg:gap-x-6">
             {currentRound.answers.map((ans, i) => {
               const exposed = sneakReveal || revealed[i];
               return (
-                <div key={i} className={`relative w-full h-full min-h-[55px] md:min-h-[65px]
-                  ${cellClickable(i) ? 'cursor-pointer group' : 'cursor-default'}`}
+                <div key={i}
+                  className={`relative w-full h-[52px] sm:h-[56px] md:h-auto min-h-[52px]
+                    ${cellClickable(i) ? 'cursor-pointer group' : 'cursor-default'}`}
                   onClick={() => cellClickable(i) && handleFlip(i)}>
                   <motion.div
                     className="w-full h-full relative preserve-3d"
                     animate={{ rotateX: exposed ? 180 : 0 }}
-                    transition={{ duration: 0.55, type: "spring", bounce: 0.35 }}
+                    transition={{ duration: 0.45, type: "spring", bounce: 0.3 }}
                   >
                     {/* Front */}
-                    <div className="absolute inset-0 backface-hidden bg-gradient-to-b from-[#1e3a8a] to-[#0f172a] border-[3px] md:border-[4px] border-[#eab308] rounded-xl flex items-center justify-center shadow-[0_5px_10px_rgba(0,0,0,0.6),inset_0_2px_15px_rgba(255,255,255,0.1)]">
+                    <div className="absolute inset-0 backface-hidden bg-gradient-to-b from-[#1e3a8a] to-[#0f172a] border-[2.5px] md:border-[3px] lg:border-[4px] border-[#eab308] rounded-lg md:rounded-xl flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
                       {!exposed && (
-                        <div className="bg-gradient-to-br from-[#fef08a] to-[#ca8a04] w-10 h-10 md:w-14 md:h-14 xl:w-16 xl:h-16 rounded-full flex items-center justify-center text-2xl md:text-3xl xl:text-4xl font-black text-black border-[3px] md:border-[4px] border-white shadow-[0_3px_10px_rgba(0,0,0,0.4)]">
+                        <div className="bg-gradient-to-br from-[#fef08a] to-[#ca8a04] w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-black border-[2px] md:border-[3px] border-white shadow-[0_2px_6px_rgba(0,0,0,0.4)] shrink-0">
                           {i + 1}
                         </div>
                       )}
                     </div>
                     {/* Back */}
-                    <div className="absolute inset-0 backface-hidden bg-gradient-to-b from-[#0f172a] to-[#020617] border-[3px] md:border-[4px] border-[#eab308] rounded-xl shadow-[0_5px_15px_rgba(234,179,8,0.2),inset_0_2px_15px_rgba(255,255,255,0.1)] flex items-center justify-between px-3 md:px-6 xl:px-8"
+                    <div className="absolute inset-0 backface-hidden bg-gradient-to-b from-[#0f172a] to-[#020617] border-[2.5px] md:border-[3px] lg:border-[4px] border-[#eab308] rounded-lg md:rounded-xl shadow-[0_2px_8px_rgba(234,179,8,0.15)] flex items-center justify-between px-2 sm:px-3 md:px-4 lg:px-6"
                       style={{ transform: 'rotateX(180deg)' }}>
-                      <div className="text-white font-black text-sm md:text-lg xl:text-2xl uppercase tracking-wider drop-shadow-[1px_1px_0_#000] text-left leading-tight overflow-hidden h-full flex items-center shrink">
-                        <span className="line-clamp-2 md:line-clamp-3 w-full">{ans.text}</span>
+                      <div className="text-white font-black text-[10px] sm:text-xs md:text-sm lg:text-lg xl:text-xl uppercase tracking-wide drop-shadow-[1px_1px_0_#000] text-left leading-tight overflow-hidden h-full flex items-center shrink min-w-0">
+                        <span className="line-clamp-1 md:line-clamp-2 lg:line-clamp-2 w-full break-words">{ans.text}</span>
                       </div>
-                      <div className="font-mono text-2xl md:text-4xl xl:text-5xl text-[#eab308] font-black leading-none drop-shadow-[2px_2px_0_#000] min-w-[50px] md:min-w-[70px] xl:min-w-[90px] text-center border-l-2 md:border-l-4 border-white/20 pl-2 md:pl-4 xl:pl-6 shrink-0 flex items-center justify-center h-full">
+                      <div className="font-mono text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-[#eab308] font-black leading-none drop-shadow-[1px_1px_0_#000] min-w-[40px] sm:min-w-[50px] md:min-w-[60px] lg:min-w-[70px] text-center border-l-2 md:border-l-[3px] border-white/15 pl-1.5 sm:pl-2 md:pl-3 lg:pl-4 shrink-0 flex items-center justify-center h-full">
                         {ans.points}
                       </div>
                     </div>
@@ -457,32 +447,32 @@ export default function App() {
         </div>
       )}
 
-      {/* ─── BOTTOM CONTROLS ─── */}
+      {/* ─── BOTTOM BAR ─── */}
       {showBottomBar && (
-        <div className="h-[140px] md:h-[180px] lg:h-[190px] shrink-0 w-full bg-gradient-to-b from-[#1a0505] to-[#000] border-t-[6px] md:border-t-[8px] border-[#eab308] flex items-center px-3 md:px-8 gap-3 md:gap-4 relative z-20 shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
+        <div className="min-h-[110px] h-[min(18vh,190px)] shrink-0 w-full bg-gradient-to-b from-[#1a0505] to-[#000] border-t-[4px] sm:border-t-[6px] md:border-t-[8px] border-[#eab308] flex items-stretch px-2 sm:px-4 md:px-6 lg:px-8 gap-2 sm:gap-3 md:gap-4 relative z-20 shadow-[0_-16px_40px_rgba(0,0,0,0.8)]">
 
           {/* Team A score */}
-          <div className={`flex-1 flex flex-col justify-center items-center h-full rounded-2xl md:rounded-3xl border-2 md:border-4 transition-all duration-300 relative overflow-hidden
-            ${r3 && r3ActiveTeam === 'A' && phase === 'play' ? 'shadow-[0_0_30px_rgba(234,179,8,0.5)] bg-[#eab308]/20 border-[#eab308]' : 'bg-black/60 border-white/10'}`}>
+          <div className={`flex-1 min-w-0 flex flex-col justify-center items-center h-full rounded-xl sm:rounded-2xl md:rounded-3xl border-2 md:border-[3px] lg:border-4 transition-all duration-300 relative overflow-hidden py-2 md:py-3
+            ${r3 && r3ActiveTeam === 'A' && phase === 'play' ? 'shadow-[0_0_24px_rgba(234,179,8,0.5)] bg-[#eab308]/20 border-[#eab308]' : 'bg-black/60 border-white/10'}`}>
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 pointer-events-none" />
-            <div className="text-xs md:text-lg xl:text-xl uppercase tracking-[2px] md:tracking-[4px] text-white font-black mb-1 z-10">ĐỘI A</div>
-            <div className="bg-gradient-to-b from-[#111] to-[#000] border-2 md:border-[4px] border-[#eab308] px-3 md:px-8 py-1 md:py-2 rounded-xl md:rounded-2xl text-center min-w-[70px] shadow-[inset_0_0_20px_rgba(234,179,8,0.2),0_5px_15px_rgba(0,0,0,0.8)] z-10">
-              <div className="font-mono text-3xl md:text-5xl lg:text-6xl text-[#eab308] font-black leading-none">{scores.A.toString().padStart(3, '0')}</div>
+            <div className="text-[10px] sm:text-sm md:text-base lg:text-xl uppercase tracking-[1px] md:tracking-[2px] lg:tracking-[3px] text-white font-black mb-0.5 md:mb-1 z-10 text-center">ĐỘI A</div>
+            <div className="bg-gradient-to-b from-[#111] to-[#000] border-2 md:border-[3px] lg:border-[4px] border-[#eab308] px-2 sm:px-4 md:px-6 lg:px-8 py-1 md:py-1.5 rounded-lg md:rounded-xl lg:rounded-2xl text-center min-w-[50px] sm:min-w-[80px] md:min-w-[100px] shadow-[inset_0_0_8px_rgba(234,179,8,0.15),0_3px_10px_rgba(0,0,0,0.6)] z-10 mx-auto w-fit">
+              <div className="font-mono text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-[#eab308] font-black leading-none">{scores.A.toString().padStart(3, '0')}</div>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex-[2] flex flex-col items-center justify-center border-x-2 border-white/10 px-2 md:px-4 h-full gap-2 md:gap-3">
+          <div className="flex-[1.5] sm:flex-[2] flex flex-col items-center justify-center border-x border-white/10 px-1.5 sm:px-2 md:px-4 h-full gap-1.5 sm:gap-2 md:gap-3 min-w-0">
 
             {/* R1-R2: team-select */}
             {phase === 'team-select' && !r3 && (
-              <div className="flex gap-3 md:gap-4 w-full max-w-lg">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 w-full max-w-md">
                 <button onClick={() => handleTeamSelect('A')}
-                  className="flex-1 bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[4px] border-[#1e3a8a] active:border-b-0 active:translate-y-[4px] hover:brightness-110 text-white px-3 md:px-6 py-4 md:py-5 uppercase text-xs md:text-xl font-black rounded-xl md:rounded-2xl transition-all shadow-lg">
+                  className="flex-1 bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] sm:border-b-[4px] md:border-b-[6px] border-[#1e3a8a] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-2 sm:px-3 md:px-6 py-2 sm:py-2.5 md:py-4 lg:py-5 uppercase text-[10px] sm:text-xs md:text-sm lg:text-xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-lg text-center leading-tight">
                   ĐỘI A CHƠI TRƯỚC
                 </button>
                 <button onClick={() => handleTeamSelect('B')}
-                  className="flex-1 bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[4px] border-[#1e3a8a] active:border-b-0 active:translate-y-[4px] hover:brightness-110 text-white px-3 md:px-6 py-4 md:py-5 uppercase text-xs md:text-xl font-black rounded-xl md:rounded-2xl transition-all shadow-lg">
+                  className="flex-1 bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] sm:border-b-[4px] md:border-b-[6px] border-[#1e3a8a] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-2 sm:px-3 md:px-6 py-2 sm:py-2.5 md:py-4 lg:py-5 uppercase text-[10px] sm:text-xs md:text-sm lg:text-xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-lg text-center leading-tight">
                   ĐỘI B CHƠI TRƯỚC
                 </button>
               </div>
@@ -490,24 +480,24 @@ export default function App() {
 
             {/* R3: two team-answer buttons */}
             {r3 && phase === 'play' && (
-              <div className="flex gap-3 md:gap-4 w-full max-w-lg">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 w-full max-w-md">
                 <button onClick={() => handleR3TeamPick('A')}
                   disabled={r3StrikesA >= 3}
-                  className={`flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl uppercase font-black text-xs md:text-base transition-all
+                  className={`flex-1 py-2 sm:py-2.5 md:py-3 lg:py-4 rounded-lg sm:rounded-xl md:rounded-2xl uppercase font-black text-[10px] sm:text-xs md:text-sm lg:text-base transition-all text-center
                     ${r3StrikesA >= 3
                       ? 'bg-gray-800/60 border-2 border-gray-600 text-gray-500 cursor-not-allowed'
                       : r3ActiveTeam === 'A'
-                        ? 'bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[4px] border-[#1e3a8a] text-white shadow-lg'
+                        ? 'bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] sm:border-b-[4px] border-[#1e3a8a] text-white shadow-lg'
                         : 'bg-white/10 border-2 border-white/20 text-white/80 hover:bg-white/20'}`}>
                   {r3StrikesA >= 3 ? 'ĐỘI A ĐÃ KHÓA 3❌' : 'ĐỘI A TRẢ LỜI'}
                 </button>
                 <button onClick={() => handleR3TeamPick('B')}
                   disabled={r3StrikesB >= 3}
-                  className={`flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl uppercase font-black text-xs md:text-base transition-all
+                  className={`flex-1 py-2 sm:py-2.5 md:py-3 lg:py-4 rounded-lg sm:rounded-xl md:rounded-2xl uppercase font-black text-[10px] sm:text-xs md:text-sm lg:text-base transition-all text-center
                     ${r3StrikesB >= 3
                       ? 'bg-gray-800/60 border-2 border-gray-600 text-gray-500 cursor-not-allowed'
                       : r3ActiveTeam === 'B'
-                        ? 'bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[4px] border-[#1e3a8a] text-white shadow-lg'
+                        ? 'bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] sm:border-b-[4px] border-[#1e3a8a] text-white shadow-lg'
                         : 'bg-white/10 border-2 border-white/20 text-white/80 hover:bg-white/20'}`}>
                   {r3StrikesB >= 3 ? 'ĐỘI B ĐÃ KHÓA 3❌' : 'ĐỘI B TRẢ LỜI'}
                 </button>
@@ -517,7 +507,7 @@ export default function App() {
             {/* R1-R2 play: SAI button */}
             {phase === 'play' && !r3 && (
               <button onClick={handleStrike}
-                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[6px] md:border-b-[8px] border-[#7f1d1d] active:border-b-0 active:translate-y-[4px] hover:brightness-110 text-white px-8 md:px-14 py-4 md:py-5 uppercase text-lg md:text-2xl font-black rounded-xl md:rounded-2xl transition-all shadow-[0_5px_15px_rgba(220,38,38,0.5)] w-full max-w-sm">
+                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[4px] sm:border-b-[5px] md:border-b-[6px] lg:border-b-[8px] border-[#7f1d1d] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-4 sm:px-6 md:px-8 lg:px-14 py-2 sm:py-2.5 md:py-3 lg:py-5 uppercase text-xs sm:text-sm md:text-lg lg:text-2xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-[0_3px_10px_rgba(220,38,38,0.5)] w-full max-w-[280px] md:max-w-sm">
                 SAI ❌
               </button>
             )}
@@ -525,7 +515,7 @@ export default function App() {
             {/* R3 + SAI button */}
             {r3 && phase === 'play' && r3ActiveTeam && (
               <button onClick={handleStrike}
-                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[6px] border-[#7f1d1d] active:border-b-0 active:translate-y-[4px] hover:brightness-110 text-white px-8 md:px-14 py-3 md:py-4 uppercase text-base md:text-xl font-black rounded-xl transition-all shadow-[0_5px_15px_rgba(220,38,38,0.5)] w-full max-w-sm">
+                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[4px] md:border-b-[6px] border-[#7f1d1d] active:border-b-0 active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-6 md:px-8 lg:px-14 py-2 md:py-3 lg:py-4 uppercase text-xs sm:text-sm md:text-base lg:text-xl font-black rounded-lg md:rounded-xl transition-all shadow-[0_3px_10px_rgba(220,38,38,0.5)] w-full max-w-sm">
                 SAI ❌ — Đội {r3ActiveTeam}
               </button>
             )}
@@ -533,7 +523,7 @@ export default function App() {
             {/* R1-R2 steal: STEAL SAI button */}
             {phase === 'steal' && !r3 && (
               <button onClick={handleStrike}
-                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[6px] md:border-b-[8px] border-[#7f1d1d] active:border-b-0 active:translate-y-[4px] hover:brightness-110 text-white px-8 md:px-14 py-4 md:py-5 uppercase text-lg md:text-2xl font-black rounded-xl md:rounded-2xl transition-all shadow-[0_5px_15px_rgba(220,38,38,0.5)] w-full max-w-sm">
+                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[4px] sm:border-b-[5px] md:border-b-[6px] lg:border-b-[8px] border-[#7f1d1d] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-4 sm:px-6 md:px-8 lg:px-14 py-2 sm:py-2.5 md:py-3 lg:py-5 uppercase text-xs sm:text-sm md:text-lg lg:text-2xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-[0_3px_10px_rgba(220,38,38,0.5)] w-full max-w-[280px] md:max-w-sm">
                 STEAL SAI ❌
               </button>
             )}
@@ -541,31 +531,149 @@ export default function App() {
             {/* R1-2 reveal: hint */}
             {phase === 'reveal' && !r3 && (
               !allRevealed
-                ? <div className="text-center">
-                  <div className="text-white/60 text-sm px-2">Tiếp tục lật các ô chưa mở</div>
+                ? <div className="text-center px-2">
+                  <div className="text-white/60 text-xs sm:text-sm px-1">Tiếp tục lật các ô chưa mở</div>
                 </div>
                 : <button onClick={nextRound}
-                  className="bg-gradient-to-b from-[#16a34a] to-[#15803d] border-b-[5px] md:border-b-[8px] border-[#14532d] active:border-b-0 active:translate-y-[4px] hover:brightness-110 text-white px-8 md:px-12 py-3 md:py-4 uppercase text-base md:text-xl font-black rounded-xl transition-all shadow-[0_5px_15px_rgba(22,163,74,0.4)] w-full max-w-sm flex items-center justify-center gap-2">
-                  SANG VÒNG TIẾP <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
+                  className="bg-gradient-to-b from-[#16a34a] to-[#15803d] border-b-[4px] md:border-b-[6px] lg:border-b-[8px] border-[#14532d] active:border-b-0 active:translate-y-[2px] md:active:translate-y-[4px] hover:brightness-110 text-white px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 lg:py-4 uppercase text-xs sm:text-sm md:text-base lg:text-xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-[0_3px_10px_rgba(22,163,74,0.4)] w-full max-w-[240px] md:max-w-sm flex items-center justify-center gap-1 sm:gap-2">
+                  SANG VÒNG TIẾP <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 lg:w-8 lg:h-8" />
                 </button>
-            )}
-
-            {/* SANG VÒNG TIẾP — r3-end */}
-            {r3 && phase === 'round3-end' && (
-              <button onClick={toGameEnd}
-                className="bg-gradient-to-b from-[#eab308] to-[#a16207] border-b-[6px] border-[#713f12] active:border-b-0 active:translate-y-[4px] hover:brightness-110 text-black px-8 md:px-12 py-3 md:py-4 uppercase text-base md:text-xl font-black rounded-xl transition-all shadow-[0_5px_15px_rgba(234,179,8,0.4)] w-full max-w-sm">
-                XEM KẾT QUẢ CUỐI CÙNG
-              </button>
             )}
           </div>
 
+          {/* r3-end button */}
+          {r3 && phase === 'round3-end' && (
+            <div className="flex-[1.5] sm:flex-[2] flex items-center justify-center px-1.5 sm:px-2 md:px-4 h-full min-w-0">
+              <button onClick={toGameEnd}
+                className="bg-gradient-to-b from-[#eab308] to-[#a16207] border-b-[5px] md:border-b-[6px] lg:border-b-[8px] border-[#713f12] active:border-b-0 active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-black px-6 md:px-8 lg:px-12 py-2 md:py-3 lg:py-4 uppercase text-xs sm:text-sm md:text-base lg:text-xl font-black rounded-lg md:rounded-xl transition-all shadow-[0_3px_10px_rgba(234,179,8,0.4)] w-full max-w-sm text-center">
+                XEM KẾT QUẢ CUỐI CÙNG
+              </button>
+            </div>
+          )}
+
           {/* Team B score */}
-          <div className={`flex-1 flex flex-col justify-center items-center h-full rounded-2xl md:rounded-3xl border-2 md:border-4 transition-all duration-300 relative overflow-hidden
-            ${r3 && r3ActiveTeam === 'B' && phase === 'play' ? 'shadow-[0_0_30px_rgba(234,179,8,0.5)] bg-[#eab308]/20 border-[#eab308]' : 'bg-black/60 border-white/10'}`}>
+          <div className={`flex-1 min-w-0 flex flex-col justify-center items-center h-full rounded-xl sm:rounded-2xl md:rounded-3xl border-2 md:border-[3px] lg:border-4 transition-all duration-300 relative overflow-hidden py-2 md:py-3
+            ${r3 && r3ActiveTeam === 'B' && phase === 'play' ? 'shadow-[0_0_24px_rgba(234,179,8,0.5)] bg-[#eab308]/20 border-[#eab308]' : 'bg-black/60 border-white/10'}`}>
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 pointer-events-none" />
-            <div className="text-xs md:text-lg xl:text-xl uppercase tracking-[2px] md:tracking-[4px] text-white font-black mb-1 z-10">ĐỘI B</div>
-            <div className="bg-gradient-to-b from-[#111] to-[#000] border-2 md:border-[4px] border-[#eab308] px-3 md:px-8 py-1 md:py-2 rounded-xl md:rounded-2xl text-center min-w-[70px] shadow-[inset_0_0_20px_rgba(234,179,8,0.2),0_5px_15px_rgba(0,0,0,0.8)] z-10">
-              <div className="font-mono text-3xl md:text-5xl lg:text-6xl text-[#eab308] font-black leading-none">{scores.B.toString().padStart(3, '0')}</div>
+            <div className="text-[10px] sm:text-sm md:text-base lg:text-xl uppercase tracking-[1px] md:tracking-[2px] lg:tracking-[3px] text-white font-black mb-0.5 md:mb-1 z-10 text-center">ĐỘI B</div>
+            <div className="bg-gradient-to-b from-[#111] to-[#000] border-2 md:border-[3px] lg:border-[4px] border-[#eab308] px-2 sm:px-4 md:px-6 lg:px-8 py-1 md:py-1.5 rounded-lg md:rounded-xl lg:rounded-2xl text-center min-w-[50px] sm:min-w-[80px] md:min-w-[100px] shadow-[inset_0_0_8px_rgba(234,179,8,0.15),0_3px_10px_rgba(0,0,0,0.6)] z-10 mx-auto w-fit">
+              <div className="font-mono text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-[#eab308] font-black leading-none">{scores.B.toString().padStart(3, '0')}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── BOTTOM CONTROLS ─── */}
+      {showBottomBar && (
+        <div className="min-h-[110px] h-[min(18vh,190px)] shrink-0 w-full bg-gradient-to-b from-[#1a0505] to-[#000] border-t-[4px] sm:border-t-[6px] md:border-t-[8px] border-[#eab308] flex items-stretch px-2 sm:px-4 md:px-6 lg:px-8 gap-2 sm:gap-3 md:gap-4 relative z-20 shadow-[0_-16px_40px_rgba(0,0,0,0.8)]">
+
+          {/* Team A score */}
+          <div className={`flex-1 min-w-0 flex flex-col justify-center items-center h-full rounded-xl sm:rounded-2xl md:rounded-3xl border-2 md:border-[3px] lg:border-4 transition-all duration-300 relative overflow-hidden py-2 md:py-3
+            ${r3 && r3ActiveTeam === 'A' && phase === 'play' ? 'shadow-[0_0_24px_rgba(234,179,8,0.45)] bg-[#eab308]/15 border-[#eab308]' : 'bg-black/60 border-white/10'}`}>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 pointer-events-none" />
+            <div className="text-[10px] sm:text-sm md:text-base lg:text-xl uppercase tracking-wider text-white font-black mb-0.5 md:mb-1 z-10 text-center shrink-0">ĐỘI A</div>
+            <div className="bg-gradient-to-b from-[#111] to-[#000] border-2 md:border-[3px] lg:border-[4px] border-[#eab308] px-2 sm:px-4 md:px-6 lg:px-8 py-1 md:py-1.5 rounded-lg md:rounded-xl lg:rounded-2xl text-center shadow-[inset_0_0_6px_rgba(234,179,8,0.12),0_2px_8px_rgba(0,0,0,0.6)] z-10 mx-auto w-fit shrink-0">
+              <div className="font-mono text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-[#eab308] font-black leading-none whitespace-nowrap">{scores.A.toString().padStart(3, '0')}</div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex-[1.6] sm:flex-[2] flex flex-col items-center justify-center border-x border-white/10 px-1.5 sm:px-2 md:px-4 h-full gap-1.5 sm:gap-2 md:gap-3 min-w-0">
+
+            {/* R1-R2: team-select */}
+            {phase === 'team-select' && !r3 && (
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 w-full max-w-lg">
+                <button onClick={() => handleTeamSelect('A')}
+                  className="flex-1 bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] sm:border-b-[4px] md:border-b-[6px] border-[#1e3a8a] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-2 sm:px-3 md:px-6 py-2.5 sm:py-3 md:py-4 lg:py-5 uppercase text-[10px] sm:text-xs md:text-sm lg:text-xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-lg text-center leading-tight h-10 sm:h-12 md:h-auto min-h-[36px]">
+                  ĐỘI A CHƠI TRƯỚC
+                </button>
+                <button onClick={() => handleTeamSelect('B')}
+                  className="flex-1 bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] sm:border-b-[4px] md:border-b-[6px] border-[#1e3a8a] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-2 sm:px-3 md:px-6 py-2.5 sm:py-3 md:py-4 lg:py-5 uppercase text-[10px] sm:text-xs md:text-sm lg:text-xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-lg text-center leading-tight h-10 sm:h-12 md:h-auto min-h-[36px]">
+                  ĐỘI B CHƠI TRƯỚC
+                </button>
+              </div>
+            )}
+
+            {/* R3: two team-answer buttons */}
+            {r3 && phase === 'play' && (
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 w-full max-w-lg">
+                <button onClick={() => handleR3TeamPick('A')}
+                  disabled={r3StrikesA >= 3}
+                  className={`flex-1 py-2 sm:py-2.5 md:py-3 lg:py-4 rounded-lg sm:rounded-xl md:rounded-2xl uppercase font-black text-[10px] sm:text-xs md:text-sm lg:text-base transition-all text-center min-h-[36px] sm:min-h-[42px] md:min-h-auto
+                    ${r3StrikesA >= 3
+                      ? 'bg-gray-800/60 border-2 border-gray-600 text-gray-500 cursor-not-allowed'
+                      : r3ActiveTeam === 'A'
+                        ? 'bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] sm:border-b-[4px] border-[#1e3a8a] text-white shadow-lg'
+                        : 'bg-white/10 border-2 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                  {r3StrikesA >= 3 ? 'ĐỘI A ĐÃ KHÓA 3❌' : 'ĐỘI A TRẢ LỜI'}
+                </button>
+                <button onClick={() => handleR3TeamPick('B')}
+                  disabled={r3StrikesB >= 3}
+                  className={`flex-1 py-2 sm:py-2.5 md:py-3 lg:py-4 rounded-lg sm:rounded-xl md:rounded-2xl uppercase font-black text-[10px] sm:text-xs md:text-sm lg:text-base transition-all text-center min-h-[36px] sm:min-h-[42px] md:min-h-auto
+                    ${r3StrikesB >= 3
+                      ? 'bg-gray-800/60 border-2 border-gray-600 text-gray-500 cursor-not-allowed'
+                      : r3ActiveTeam === 'B'
+                        ? 'bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] sm:border-b-[4px] border-[#1e3a8a] text-white shadow-lg'
+                        : 'bg-white/10 border-2 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                  {r3StrikesB >= 3 ? 'ĐỘI B ĐÃ KHÓA 3❌' : 'ĐỘI B TRẢ LỜI'}
+                </button>
+              </div>
+            )}
+
+            {/* R1-R2 play: SAI button */}
+            {phase === 'play' && !r3 && (
+              <button onClick={handleStrike}
+                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[4px] sm:border-b-[5px] md:border-b-[8px] border-[#7f1d1d] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-4 sm:px-6 md:px-8 lg:px-14 py-2 sm:py-3 md:py-4 lg:py-5 uppercase text-sm sm:text-base md:text-lg lg:text-2xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-[0_3px_10px_rgba(220,38,38,0.5)] w-full max-w-[280px] md:max-w-sm min-h-[44px]">
+                SAI ❌
+              </button>
+            )}
+
+            {/* R3 + SAI button */}
+            {r3 && phase === 'play' && r3ActiveTeam && (
+              <button onClick={handleStrike}
+                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[4px] sm:border-b-[5px] md:border-b-[6px] border-[#7f1d1d] active:border-b-0 active:translate-y-[3px] sm:active:translate-y-[4px] hover:brightness-110 text-white px-4 sm:px-6 md:px-8 lg:px-14 py-2 sm:py-3 md:py-3 lg:py-4 uppercase text-xs sm:text-sm md:text-base lg:text-xl font-black rounded-lg sm:rounded-xl transition-all shadow-[0_3px_10px_rgba(220,38,38,0.5)] w-full max-w-sm min-h-[44px]">
+                SAI ❌ — Đội {r3ActiveTeam}
+              </button>
+            )}
+
+            {/* R1-R2 steal: STEAL SAI button */}
+            {phase === 'steal' && !r3 && (
+              <button onClick={handleStrike}
+                className="bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-b-[4px] sm:border-b-[5px] md:border-b-[8px] border-[#7f1d1d] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-4 sm:px-6 md:px-8 lg:px-14 py-2 sm:py-3 md:py-4 lg:py-5 uppercase text-sm sm:text-base md:text-lg lg:text-2xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-[0_3px_10px_rgba(220,38,38,0.5)] w-full max-w-[280px] md:max-w-sm min-h-[44px]">
+                STEAL SAI ❌
+              </button>
+            )}
+
+            {/* R1-2 reveal: hint / next button */}
+            {phase === 'reveal' && !r3 && (
+              !allRevealed
+                ? <div className="text-center px-1">
+                  <div className="text-white/50 text-[10px] sm:text-xs md:text-sm px-1">Tiếp tục lật các ô chưa mở</div>
+                </div>
+                : <button onClick={nextRound}
+                  className="bg-gradient-to-b from-[#16a34a] to-[#15803d] border-b-[4px] sm:border-b-[5px] md:border-b-[8px] border-[#14532d] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-white px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-3 md:py-3 lg:py-4 uppercase text-[10px] sm:text-xs md:text-sm lg:text-xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-[0_3px_10px_rgba(22,163,74,0.4)] w-full max-w-[240px] md:max-w-sm flex items-center justify-center gap-1 sm:gap-2 min-h-[44px]">
+                  SANG VÒNG TIẾP <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-6 md:h-6 lg:w-8 lg:h-8" />
+                </button>
+            )}
+          </div>
+
+          {/* r3-end to-game button */}
+          {r3 && phase === 'round3-end' && (
+            <div className="flex-[1.6] sm:flex-[2] flex items-center justify-center px-1.5 sm:px-2 md:px-4 h-full min-w-0">
+              <button onClick={toGameEnd}
+                className="bg-gradient-to-b from-[#eab308] to-[#a16207] border-b-[4px] sm:border-b-[5px] md:border-b-[8px] border-[#713f12] active:border-b-0 active:translate-y-[2px] sm:active:translate-y-[3px] md:active:translate-y-[4px] hover:brightness-110 text-black px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-3 md:py-3 lg:py-4 uppercase text-[10px] sm:text-xs md:text-sm lg:text-xl font-black rounded-lg sm:rounded-xl md:rounded-2xl transition-all shadow-[0_3px_10px_rgba(234,179,8,0.4)] w-full max-w-sm min-h-[44px]">
+                XEM KẾT QUẢ CUỐI CÙNG
+              </button>
+            </div>
+          )}
+
+          {/* Team B score */}
+          <div className={`flex-1 min-w-0 flex flex-col justify-center items-center h-full rounded-xl sm:rounded-2xl md:rounded-3xl border-2 md:border-[3px] lg:border-4 transition-all duration-300 relative overflow-hidden py-2 md:py-3
+            ${r3 && r3ActiveTeam === 'B' && phase === 'play' ? 'shadow-[0_0_24px_rgba(234,179,8,0.45)] bg-[#eab308]/15 border-[#eab308]' : 'bg-black/60 border-white/10'}`}>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 pointer-events-none" />
+            <div className="text-[10px] sm:text-sm md:text-base lg:text-xl uppercase tracking-wider text-white font-black mb-0.5 md:mb-1 z-10 text-center shrink-0">ĐỘI B</div>
+            <div className="bg-gradient-to-b from-[#111] to-[#000] border-2 md:border-[3px] lg:border-[4px] border-[#eab308] px-2 sm:px-4 md:px-6 lg:px-8 py-1 md:py-1.5 rounded-lg md:rounded-xl lg:rounded-2xl text-center shadow-[inset_0_0_6px_rgba(234,179,8,0.12),0_2px_8px_rgba(0,0,0,0.6)] z-10 mx-auto w-fit shrink-0">
+              <div className="font-mono text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-[#eab308] font-black leading-none whitespace-nowrap">{scores.B.toString().padStart(3, '0')}</div>
             </div>
           </div>
         </div>
