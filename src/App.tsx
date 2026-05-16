@@ -66,12 +66,18 @@ export default function App() {
   });
 
   const audiosRef = useRef<{ [k: string]: HTMLAudioElement }>({});
+  const openingRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     audiosRef.current = {
       ding: new Audio('https://www.myinstants.com/media/sounds/family-feud-good-answer.mp3'),
       strike: new Audio('https://www.myinstants.com/media/sounds/family-feud-strike-sfx_kN6Z99k.mp3'),
       win: new Audio('https://www.myinstants.com/media/sounds/family-feud-win-sound-effect.mp3'),
     };
+    openingRef.current = new Audio('https://www.myinstants.com/media/sounds/family-feud-theme.mp3');
+    if (openingRef.current) {
+      openingRef.current.loop = true;
+      openingRef.current.volume = 0.6;
+    }
     Object.values(audiosRef.current).forEach(a => (a as HTMLAudioElement).load());
   }, []);
 
@@ -151,7 +157,8 @@ export default function App() {
       setStrikes(prev => {
         const n = prev + 1;
         if (n === 3) {
-          setNotification({ text: `ĐỘI ${s.activeTeam} CƯỚP ĐIỂM!`, type: 'steal' });
+          const stealTeam = s.activeTeam === 'A' ? 'B' : 'A';
+          setNotification({ text: `ĐỘI ${stealTeam} CƯỚP ĐIỂM!`, type: 'steal' });
           setTimeout(() => { setNotification(null); setPhase('steal'); }, 1400);
         }
         return n;
@@ -167,7 +174,26 @@ export default function App() {
     setPhase('play');
   }, []);
 
-  const handleStart = useCallback(() => setPhase('team-select'), []);
+  const handleStart = useCallback(() => {
+    // Fade out opening theme
+    if (openingRef.current) {
+      const fade = setInterval(() => {
+        if (openingRef.current) {
+          openingRef.current.volume = Math.max(0, openingRef.current.volume - 0.08);
+          if (openingRef.current.volume <= 0.05) {
+            openingRef.current.pause();
+            openingRef.current.volume = 0.6;
+            clearInterval(fade);
+          }
+        }
+      }, 80);
+    }
+    // Play short transition sting (reuse win sound as end of theme)
+    setTimeout(() => {
+      playSound('win');
+      setPhase('team-select');
+    }, 650);
+  }, [playSound]);
 
   const nextRound = useCallback(() => {
     const s = stateRef.current;
@@ -215,15 +241,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, [phase]);
 
-  // Thông báo cướp điểm khi vào steal (dùng stateRef tránh lag team)
-  useEffect(() => {
-    if (phase === 'steal' && !notification) {
-      const s = stateRef.current;
-      const stealTeam = s.activeTeam === 'A' ? 'B' : 'A';
-      setNotification({ text: `ĐỘI ${stealTeam} CƯỚP ĐIỂM!`, type: 'steal' });
-      setTimeout(() => setNotification(null), 1600);
-    }
-  }, [phase]);
+
 
   useEffect(() => {
     if (phase !== 'reveal' || !allRevealed) return;
@@ -289,6 +307,10 @@ export default function App() {
   }
 
   if (phase === 'intro') {
+    // Auto play opening theme
+    if (openingRef.current && openingRef.current.paused) {
+      openingRef.current.play().catch(() => {});
+    }
     return (
       <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold">
         <div className="text-[120px] text-[#eab308] font-black tracking-[12px]">CHUNG SỨC</div>
