@@ -76,7 +76,7 @@ export default function App() {
       strike: new Audio('https://www.myinstants.com/media/sounds/family-feud-strike-sfx_kN6Z99k.mp3'),
       win: new Audio('https://www.myinstants.com/media/sounds/family-feud-win-sound-effect.mp3'),
     };
-    openingRef.current = new Audio('https://www.myinstants.com/media/sounds/family-feud-theme.mp3');
+    openingRef.current = new Audio('https://ia801003.us.archive.org/8/items/tvtunes_33032/Family%20Feud%20-%20Harvey%20Era.mp3');
     if (openingRef.current) {
       openingRef.current.loop = true;
       openingRef.current.volume = 0.6;
