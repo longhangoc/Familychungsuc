@@ -86,7 +86,7 @@ function OpeningScreen({ onStart, openingRef }: { onStart: () => void; openingRe
   }, []);
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold relative">
+    <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold relative opening-screen">
       <button
         onClick={toggleMusic}
         className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all"
@@ -170,6 +170,7 @@ export default function App() {
     newRevealed[i] = true;
     setRevealed(newRevealed);
     setAnswerTimer(15);
+    setIsTimerActive(false);
 
     // Bay điểm animation
     const rect = (document.querySelectorAll('.preserve-3d')[i] as HTMLElement)?.getBoundingClientRect();
@@ -250,7 +251,7 @@ export default function App() {
   }, [currentRoundIdx, firstTeamOfGame]);
 
   const handleStart = useCallback(() => {
-    // Fade out opening + chuyển sau 2.5s
+    // Fade out nhạc + animation chuyển cảnh mượt
     if (openingRef.current) {
       const fade = setInterval(() => {
         if (openingRef.current) {
@@ -263,6 +264,13 @@ export default function App() {
         }
       }, 60);
     }
+
+    // Thêm hiệu ứng scale + fade khi chuyển màn
+    const introEl = document.querySelector('.opening-screen');
+    if (introEl) {
+      introEl.classList.add('scale-95', 'opacity-0', 'transition-all', 'duration-300');
+    }
+
     setTimeout(() => {
       playSound('win');
       setPhase('team-select');
@@ -329,6 +337,7 @@ export default function App() {
     if (answerTimer <= 0) {
       handleStrike();
       setIsTimerActive(false);
+      setAnswerTimer(15);
       return;
     }
     const t = setTimeout(() => setAnswerTimer(answerTimer - 1), 1000);
@@ -354,7 +363,7 @@ export default function App() {
 
     // Chỉ hiện thông báo, KHÔNG tự chuyển phase
     setNotification({ text: `KẾT THÚC VÒNG ${currentRoundIdx + 1}!`, type: 'end' });
-    const timer = setTimeout(() => setNotification(null), 3800);
+    const timer = setTimeout(() => setNotification(null), 1800);
     return () => clearTimeout(timer);
   }, [phase, allRevealed, r3]);
 
@@ -491,10 +500,28 @@ export default function App() {
             )}
 
             {r3 && phase === 'play' && (
-              <>
-                <button disabled={r3StrikesA >= 3} onClick={() => setR3ActiveTeam('A')} className={`flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl text-sm md:text-xl font-black ${r3StrikesA >= 3 ? 'bg-gray-800 text-gray-400' : 'bg-blue-600 text-white'}`}>ĐỘI A TRẢ LỜI</button>
-                <button disabled={r3StrikesB >= 3} onClick={() => setR3ActiveTeam('B')} className={`flex-1 py-3 md:py-4 rounded-xl md:rounded-2xl text-sm md:text-xl font-black ${r3StrikesB >= 3 ? 'bg-gray-800 text-gray-400' : 'bg-blue-600 text-white'}`}>ĐỘI B TRẢ LỜI</button>
-              </>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full max-w-lg">
+                <button onClick={() => setR3ActiveTeam('A')}
+                  disabled={r3StrikesA >= 3}
+                  className={`flex-1 py-2.5 md:py-3 rounded-xl md:rounded-2xl uppercase font-black text-sm md:text-base transition-all
+                    ${r3StrikesA >= 3
+                      ? 'bg-gray-800/60 border-2 border-gray-600 text-gray-500 cursor-not-allowed'
+                      : r3ActiveTeam === 'A'
+                        ? 'bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] border-[#1e3a8a] text-white shadow-lg'
+                        : 'bg-white/10 border-2 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                  {r3StrikesA >= 3 ? 'ĐỘI A ĐÃ KHÓA 3❌' : 'ĐỘI A TRẢ LỜI'}
+                </button>
+                <button onClick={() => setR3ActiveTeam('B')}
+                  disabled={r3StrikesB >= 3}
+                  className={`flex-1 py-2.5 md:py-3 rounded-xl md:rounded-2xl uppercase font-black text-sm md:text-base transition-all
+                    ${r3StrikesB >= 3
+                      ? 'bg-gray-800/60 border-2 border-gray-600 text-gray-500 cursor-not-allowed'
+                      : r3ActiveTeam === 'B'
+                        ? 'bg-gradient-to-b from-[#2563eb] to-[#1e3a8a] border-b-[3px] border-[#1e3a8a] text-white shadow-lg'
+                        : 'bg-white/10 border-2 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                  {r3StrikesB >= 3 ? 'ĐỘI B ĐÃ KHÓA 3❌' : 'ĐỘI B TRẢ LỜI'}
+                </button>
+              </div>
             )}
 
             {phase === 'play' && !r3 && (
@@ -514,7 +541,7 @@ export default function App() {
               </>
             )}
             {r3 && phase === 'play' && r3ActiveTeam && (
-              <>
+              <div className="flex flex-col sm:flex-row gap-2 w-full max-w-md items-center">
                 <button 
                   onClick={() => {
                     setAnswerTimer(15);
@@ -522,12 +549,12 @@ export default function App() {
                     setNotification({ text: 'BẮT ĐẦU ĐẾM 15 GIÂY!', type: 'end' });
                     setTimeout(() => setNotification(null), 1200);
                   }} 
-                  className="bg-yellow-600 text-black text-sm md:text-lg font-black px-4 py-2 rounded-xl mb-1"
+                  className="flex-1 bg-yellow-600 text-black text-sm md:text-base font-black px-4 py-2.5 rounded-xl"
                 >
                   BẮT ĐẦU ĐẾM 15s
                 </button>
-                <button onClick={handleStrike} className="bg-red-600 text-white text-lg md:text-2xl font-black px-6 md:px-10 py-3 md:py-4 rounded-xl md:rounded-2xl">SAI ❌ — ĐỘI {r3ActiveTeam}</button>
-              </>
+                <button onClick={handleStrike} className="flex-1 bg-red-600 text-white text-base md:text-xl font-black px-6 py-2.5 rounded-xl">SAI ❌ — ĐỘI {r3ActiveTeam}</button>
+              </div>
             )}
             {phase === 'steal' && !r3 && <button onClick={handleStrike} className="bg-red-600 text-white text-xl md:text-3xl font-black px-8 md:px-16 py-3 md:py-4 rounded-xl md:rounded-2xl">STEAL SAI ❌</button>}
 
