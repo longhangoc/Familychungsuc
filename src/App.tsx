@@ -268,6 +268,16 @@ export default function App() {
     return () => clearTimeout(t);
   }, [phase, r3, r3ActiveTeam, activeTeam, answerTimer]);
 
+  // Auto play opening music khi vào intro
+  useEffect(() => {
+    if (phase === 'intro' && openingRef.current) {
+      openingRef.current.currentTime = 0;
+      openingRef.current.loop = true;
+      openingRef.current.volume = 0.65;
+      openingRef.current.play().catch(() => {});
+    }
+  }, [phase]);
+
 
 
   useEffect(() => {
@@ -344,13 +354,6 @@ export default function App() {
   }
 
   if (phase === 'intro') {
-    // Auto play opening theme when entering intro
-    if (openingRef.current && openingRef.current.paused) {
-      openingRef.current.currentTime = 0;
-      openingRef.current.loop = true;
-      openingRef.current.volume = 0.65;
-      openingRef.current.play().catch(() => {});
-    }
     return (
       <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold">
         <div className="text-[120px] text-[#eab308] font-black tracking-[12px]">CHUNG SỨC</div>
