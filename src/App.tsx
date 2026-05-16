@@ -48,7 +48,10 @@ function OpeningScreen({ onStart, openingRef }: { onStart: () => void; openingRe
 
   const toggleMusic = () => {
     const audio = openingRef.current;
-    if (!audio) return;
+    if (!audio) {
+      console.log('Audio ref is null');
+      return;
+    }
 
     if (isPlaying) {
       audio.pause();
@@ -57,7 +60,9 @@ function OpeningScreen({ onStart, openingRef }: { onStart: () => void; openingRe
       audio.currentTime = 0;
       audio.loop = true;
       audio.volume = 0.65;
-      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio.play()
+        .then(() => setIsPlaying(true))
+        .catch((e) => console.log('Play error:', e));
     }
   };
 
@@ -115,6 +120,7 @@ export default function App() {
   const [answerTimer, setAnswerTimer] = useState(15);
   const [firstTeamOfGame, setFirstTeamOfGame] = useState<Team | null>(null);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [isTimerActive, setIsTimerActive] = useState(false);
 
   const stateRef = useRef({ phase, activeTeam, roundPoints, revealed, strikes, currentRoundIdx, scores, r3StrikesA, r3StrikesB, r3ActiveTeam });
   useEffect(() => {
@@ -312,10 +318,9 @@ export default function App() {
     return () => clearInterval(timer);
   }, [phase]);
 
-  // Timer 15s cho tất cả vòng (chỉ đếm khi quản trò bấm nút)
+  // Timer 15s cho tất cả vòng (chỉ đếm khi bấm nút)
   useEffect(() => {
-    if (phase !== 'play') return;
-    if (answerTimer >= 15) return; // chưa bấm nút thì không đếm
+    if (phase !== 'play' || !isTimerActive) return;
 
     const isR3Active = r3 && r3ActiveTeam;
     const isR1R2Active = !r3 && activeTeam;
@@ -323,11 +328,12 @@ export default function App() {
 
     if (answerTimer <= 0) {
       handleStrike();
+      setIsTimerActive(false);
       return;
     }
     const t = setTimeout(() => setAnswerTimer(answerTimer - 1), 1000);
     return () => clearTimeout(t);
-  }, [phase, r3, r3ActiveTeam, activeTeam, answerTimer]);
+  }, [phase, r3, r3ActiveTeam, activeTeam, answerTimer, isTimerActive]);
 
   // Auto play opening music khi vào intro
   useEffect(() => {
@@ -493,13 +499,33 @@ export default function App() {
 
             {phase === 'play' && !r3 && (
               <>
-                <button onClick={() => setAnswerTimer(15)} className="bg-yellow-600 text-black text-sm md:text-lg font-black px-4 py-2 rounded-xl mb-1">BẮT ĐẦU ĐẾM 15s</button>
+                <button 
+                  onClick={() => {
+                    setAnswerTimer(15);
+                    setIsTimerActive(true);
+                    setNotification({ text: 'BẮT ĐẦU ĐẾM 15 GIÂY!', type: 'end' });
+                    setTimeout(() => setNotification(null), 1200);
+                  }} 
+                  className="bg-yellow-600 text-black text-sm md:text-lg font-black px-4 py-2 rounded-xl mb-1"
+                >
+                  BẮT ĐẦU ĐẾM 15s
+                </button>
                 <button onClick={handleStrike} className="bg-red-600 text-white text-xl md:text-3xl font-black px-8 md:px-16 py-3 md:py-4 rounded-xl md:rounded-2xl">SAI ❌</button>
               </>
             )}
             {r3 && phase === 'play' && r3ActiveTeam && (
               <>
-                <button onClick={() => setAnswerTimer(15)} className="bg-yellow-600 text-black text-sm md:text-lg font-black px-4 py-2 rounded-xl mb-1">BẮT ĐẦU ĐẾM 15s</button>
+                <button 
+                  onClick={() => {
+                    setAnswerTimer(15);
+                    setIsTimerActive(true);
+                    setNotification({ text: 'BẮT ĐẦU ĐẾM 15 GIÂY!', type: 'end' });
+                    setTimeout(() => setNotification(null), 1200);
+                  }} 
+                  className="bg-yellow-600 text-black text-sm md:text-lg font-black px-4 py-2 rounded-xl mb-1"
+                >
+                  BẮT ĐẦU ĐẾM 15s
+                </button>
                 <button onClick={handleStrike} className="bg-red-600 text-white text-lg md:text-2xl font-black px-6 md:px-10 py-3 md:py-4 rounded-xl md:rounded-2xl">SAI ❌ — ĐỘI {r3ActiveTeam}</button>
               </>
             )}
