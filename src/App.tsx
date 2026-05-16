@@ -43,6 +43,58 @@ const DATA = [
 
 function isRound3(idx: number) { return idx === DATA.length - 1; }
 
+function OpeningScreen({ onStart, openingRef }: { onStart: () => void; openingRef: any }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const toggleMusic = () => {
+    const audio = openingRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      audio.currentTime = 0;
+      audio.loop = true;
+      audio.volume = 0.65;
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  };
+
+  // Aggressive autoplay bypass
+  useEffect(() => {
+    const audio = openingRef.current;
+    if (audio) {
+      audio.currentTime = 0;
+      audio.loop = true;
+      audio.volume = 0.65;
+      audio.muted = true;
+      audio.play().then(() => {
+        setTimeout(() => {
+          if (audio) {
+            audio.muted = false;
+            setIsPlaying(true);
+          }
+        }, 80);
+      }).catch(() => {});
+    }
+  }, []);
+
+  return (
+    <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold relative">
+      <button
+        onClick={toggleMusic}
+        className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all"
+      >
+        {isPlaying ? <VolumeX size={28} /> : <Volume2 size={28} />}
+      </button>
+
+      <div className="text-[120px] text-[#eab308] font-black tracking-[12px]">CHUNG SỨC</div>
+      <button onClick={onStart} className="mt-8 bg-[#eab308] text-black px-16 py-5 text-3xl font-black rounded-3xl">BẮT ĐẦU CHƠI</button>
+    </div>
+  );
+}
+
 export default function App() {
   const [currentRoundIdx, setCurrentRoundIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('intro');
@@ -362,33 +414,9 @@ export default function App() {
     );
   }
 
+  // ─── OPENING SCREEN (tách riêng) ────────────────────────────────
   if (phase === 'intro') {
-    const toggleMusic = () => {
-      if (!openingRef.current) return;
-      if (isMusicPlaying) {
-        openingRef.current.pause();
-        setIsMusicPlaying(false);
-      } else {
-        openingRef.current.currentTime = 0;
-        openingRef.current.loop = true;
-        openingRef.current.volume = 0.65;
-        openingRef.current.play().then(() => setIsMusicPlaying(true)).catch(() => {});
-      }
-    };
-
-    return (
-      <div className="flex h-screen w-screen flex-col bg-[#020513] text-white items-center justify-center font-sans font-bold relative">
-        <button
-          onClick={toggleMusic}
-          className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all"
-        >
-          {isMusicPlaying ? <VolumeX size={28} /> : <Volume2 size={28} />}
-        </button>
-
-        <div className="text-[120px] text-[#eab308] font-black tracking-[12px]">CHUNG SỨC</div>
-        <button onClick={handleStart} className="mt-8 bg-[#eab308] text-black px-16 py-5 text-3xl font-black rounded-3xl">BẮT ĐẦU CHƠI</button>
-      </div>
-    );
+    return <OpeningScreen onStart={handleStart} openingRef={openingRef} />;
   }
 
   return (
