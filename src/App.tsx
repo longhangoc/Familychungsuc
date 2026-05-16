@@ -121,13 +121,7 @@ export default function App() {
       // ── Rounds 1-2: main team accumulates ──
       const newPts = s.roundPoints + DATA[s.currentRoundIdx].answers[i].points;
       setRoundPoints(newPts);
-      if (newRevealed.every(x => x)) {
-        // All 6 revealed → main team keeps all accumulated points
-        setTimeout(() => {
-          setScores(prev => ({ ...prev, [s.activeTeam!]: prev[s.activeTeam!] + newPts }));
-          setPhase('round-end');
-        }, 1000);
-      }
+      // (round-end is handled by useEffect watching allRevealed + phase === 'reveal')
     } else if (s.phase === 'steal') {
       // ── Steal correct: x2 cell points → stealing team only ──
       const cellPts = DATA[s.currentRoundIdx].answers[i].points * 2;
@@ -210,7 +204,27 @@ export default function App() {
     }
   }, []);
 
-  // ─── SAVE & PROCEED round-end / round3-end → game-end ─────────────
+  // ─── DERIVED ──────────────────────────────────────────────────────
+  const currentRound = DATA[currentRoundIdx];
+  const r3 = isRound3(currentRoundIdx);
+  const stealingTeam = activeTeam === 'A' ? 'B' : (activeTeam === 'B' ? 'A' : null);
+   const allRevealed = revealed.every(Boolean);
+  const showBottomBar = phase !== 'intro' && phase !== 'round-end' && phase !== 'round3-end';
+
+  // ─── AUTO-ADVANCE: khi lật hết 6 ô trong reveal → sang round-end ───
+  useEffect(() => {
+    if (phase !== 'reveal') return;
+    if (!allRevealed) return;
+    // Tự động cộng điểm tích lũy cho đội chơi chính nếu chưa cộng
+    if (!r3 && roundPoints > 0 && activeTeam) {
+      setScores(prev => ({ ...prev, [activeTeam]: prev[activeTeam] + roundPoints }));
+    }
+    // Chuyển sang round-end sau 1.5s để người xem thấy hết đáp án
+    const timer = setTimeout(() => setPhase('round-end'), 1500);
+    return () => clearTimeout(timer);
+  }, [phase, allRevealed, r3, roundPoints, activeTeam]);
+
+  // ─── SAVE round scores → game-end ─────────────────────────────────
   const toGameEnd = useCallback(() => {
     setRoundScores(prev => {
       if (prev.length > currentRoundIdx) return prev;
@@ -241,14 +255,6 @@ export default function App() {
   }, [handleFlip, handleStrike, handleTeamSelect]);
 
 
-  // ─── DERIVED ──────────────────────────────────────────────────────
-  const currentRound = DATA[currentRoundIdx];
-  const r3 = isRound3(currentRoundIdx);
-  const stealingTeam = activeTeam === 'A' ? 'B' : (activeTeam === 'B' ? 'A' : null);
-   const allRevealed = revealed.every(Boolean);
-
-   // Same-group phases hide the bottom bar
-   const showBottomBar = phase !== 'intro' && phase !== 'round-end' && phase !== 'round3-end';
 
   // Floating status badge for room screen
   function statusBadge() {
@@ -296,15 +302,6 @@ export default function App() {
             <div className="font-mono text-4xl md:text-6xl text-[#eab308] font-black">{scores.B.toLocaleString()}</div>
           </div>
         </div>
-        <div className="w-full max-w-2xl bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 mb-8">
-          <h2 className="text-xl md:text-2xl text-[#eab308] font-black uppercase tracking-wider mb-4 text-center">Chi tiết điểm từng vòng</h2>
-          {roundScores.map((rs, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0 px-2">
-              <span className="text-white/80 text-sm md:text-base">Vòng {i + 1}</span>
-              <span className="text-[#eab308] font-mono text-base md:text-lg font-black">{rs.A.toLocaleString()} — {rs.B.toLocaleString()}</span>
-            </div>
-          ))}
-        </div>
         <button onClick={() => window.location.reload()} className="bg-gradient-to-b from-[#eab308] to-[#a16207] border-b-[6px] border-[#713f12] active:border-b-0 active:translate-y-[4px] hover:brightness-110 text-black px-10 py-4 md:px-14 md:py-5 uppercase text-xl md:text-2xl font-black rounded-2xl cursor-pointer transition-all shadow-[0_10px_30px_rgba(234,179,8,0.4)]">
           CHƠI LẠI TỪ ĐẦU
         </button>
@@ -326,20 +323,7 @@ export default function App() {
     );
   }
 
-  // ─── RENDERING HELPERS ────────────────────────────────────────────
-  // show all answers without interactivity (overlays / team-select / reveal)
-   const sneakReveal = phase === 'reveal' || phase === 'round-end' || phase === 'round3-end';
-  // phases where clicking cells is allowed
-  const interactivePhase = phase === 'play' || phase === 'steal' || phase === 'reveal';
-
-  const cellClickable = (idx: number) => {
-    if (revealed[idx]) return false;
-    if (!interactivePhase) return false;
-    if (r3 && r3ActiveTeam === null) return false;
-    return true;
-  };
-
-  // ─── RENDERING ────────────────────────────────────────────────────
+  // RENDERING ─────────────────────────────────────────────────────────
   // Phases that show game board
   const showBoard = phase !== 'game-end' && phase !== 'round-end' && phase !== 'round3-end';
 
@@ -410,12 +394,15 @@ export default function App() {
           {/* ── Answer grid ── */}
           <div className="grid grid-cols-2 w-full flex-1 min-h-[80px] md:min-h-[180px] mb-2 md:mb-4 gap-y-[6px] sm:gap-y-2 md:gap-y-3 gap-x-2 sm:gap-x-3 md:gap-x-4 lg:gap-x-6">
             {currentRound.answers.map((ans, i) => {
-              const exposed = sneakReveal || revealed[i];
+              const exposed = phase === 'reveal' || phase === 'round-end' || phase === 'round3-end' || revealed[i];
               return (
-                <div key={i}
-                  className={`relative w-full h-[52px] sm:h-[56px] md:h-auto min-h-[52px]
-                    ${cellClickable(i) ? 'cursor-pointer group' : 'cursor-default'}`}
-                  onClick={() => cellClickable(i) && handleFlip(i)}>
+                <div key={i} className="relative w-full h-[52px] sm:h-[56px] md:h-auto min-h-[52px]"
+                   onClick={() => {
+                     if (revealed[i]) return;
+                     if (!(phase === 'play' || phase === 'steal' || phase === 'reveal')) return;
+                     if (r3 && r3ActiveTeam === null) return;
+                     handleFlip(i);
+                   }}>
                   <motion.div
                     className="w-full h-full relative preserve-3d"
                     animate={{ rotateX: exposed ? 180 : 0 }}
