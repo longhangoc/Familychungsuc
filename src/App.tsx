@@ -215,10 +215,12 @@ export default function App() {
     return () => clearInterval(timer);
   }, [phase]);
 
-  // Thông báo cướp điểm khi vào steal
+  // Thông báo cướp điểm khi vào steal (dùng stateRef tránh lag team)
   useEffect(() => {
     if (phase === 'steal' && !notification) {
-      setNotification({ text: `ĐỘI ${stealingTeam} CƯỚP ĐIỂM!`, type: 'steal' });
+      const s = stateRef.current;
+      const stealTeam = s.activeTeam === 'A' ? 'B' : 'A';
+      setNotification({ text: `ĐỘI ${stealTeam} CƯỚP ĐIỂM!`, type: 'steal' });
       setTimeout(() => setNotification(null), 1600);
     }
   }, [phase]);
